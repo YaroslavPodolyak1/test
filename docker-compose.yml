@@ -1,0 +1,80 @@
+version: '2.4'
+
+services:
+    nginx:
+        extends:
+            file: .docker/nginx/nginx-compose.yml
+            service: nginx
+        restart: unless-stopped
+        depends_on:
+            - fpm
+        links:
+            - fpm:php
+        volumes:
+            - .:/app
+        ports:
+            - 8094:80
+
+    fpm:
+        extends:
+            file: .docker/php/php-compose.yml
+            service: php
+        restart: unless-stopped
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+        environment:
+            - XDEBUG_PORT=9103
+
+    queue:
+        extends:
+            file: .docker/php/php-compose.yml
+            service: php
+        restart: unless-stopped
+        command: php artisan queue:work --tries=3
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+
+    queue_mail:
+        extends:
+            file: .docker/php/php-compose.yml
+            service: php
+        restart: unless-stopped
+        command: php artisan queue:work --queue=mail --tries=3
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+
+    composer:
+        extends:
+            file: .docker/php/php-compose.yml
+            service: composer
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+
+    db:
+        extends:
+            file: .docker/postgres/postgres-compose.yml
+            service: postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_DB=${DB_DATABASE}
+        ports:
+            - ${POSTGRES_PORT}:5432
+    testdb:
+        extends:
+            file: .docker/postgres/postgres-compose.yml
+            service: test
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_DB=${DB_DATABASE}

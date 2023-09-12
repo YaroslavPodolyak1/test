@@ -1,0 +1,22 @@
+version: '2.4'
+
+services:
+  elasticsearch:
+    image: elasticsearch:7.7.1
+    volumes:
+      - ./data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+    expose:
+      - 9200
+
+  test:
+    image: elasticsearch:7.7.1
+    volumes:
+      - ./test-data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+    expose:
+      - 9200
+
+
